@@ -142,7 +142,7 @@ final class TranslatableEventSubscriber implements EventSubscriberInterface
             ]);
         }
 
-        $name = $classMetadataInfo->getTableName() . '_unique_translation';
+        $name = $this->generateIdentifierName([$classMetadataInfo->getTableName(), 'translatable_id', 'locale'], 'UNIQ');
         if (! $this->hasUniqueTranslationConstraint($classMetadataInfo, $name) &&
             $classMetadataInfo->getName() === $classMetadataInfo->rootEntityName) {
             $classMetadataInfo->table['uniqueConstraints'][$name] = [
@@ -181,4 +181,20 @@ final class TranslatableEventSubscriber implements EventSubscriberInterface
     {
         return isset($classMetadataInfo->table['uniqueConstraints'][$name]);
     }
+    
+    protected function generateIdentifierName($columnNames, $prefix = '', $maxSize = 30)
+    {
+        $hash = implode(
+            "",
+            array_map(
+                function ($column) {
+                    return dechex(crc32($column));
+                },
+                $columnNames
+            )
+        );
+
+        return substr(strtoupper($prefix . "_" . $hash), 0, $maxSize);
+    }
+    
 }
